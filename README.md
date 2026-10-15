@@ -1,204 +1,204 @@
-# Pioneer CT-737 ESP32-S3 Controller
+# Pioneer CT-737 ESP32-S3 Контролер
 
-ESP32-S3 firmware for controlling the Pioneer CT-737 cassette deck via WiFi, BLE, MQTT, and Home Assistant.
+Прошивка ESP32-S3 для керування касетним магнітофоном Pioneer CT-737 через WiFi, BLE, MQTT та Home Assistant.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## Features
+## Можливості
 
-- **VFD control** — original Pioneer CT-737 VFD display via 3 shift-register chips (24-bit x3)
-- **VU meter** — real-time level meters on VFD (16 segments per channel, peak hold)
-- **OLED display** — 128×64 I2C OLED with 14 display styles (Sd00–Sd13)
-- **Transport control** — solenoids: PLAY / STOP / REWIND / FORWARD
-- **Tape counter** — pulse counter with Tape Return and Remain (song repeat) modes
-- **PCF8574** — reads transport sense signals (PLAY/PAUSE/FWD/REC/REW) and tape type switches
-- **FFT spectrum analyzer** — 128-band FFT via PCM1808 I2S ADC
-- **WS2812B LED strip** — 40 LEDs with spectrum animation
-- **WiFi + WebSocket** — web interface with live VU meter
-- **BLE GATT** — remote control via Chrome (Android) — `TapeControl_BLE.html`
-- **MQTT + Home Assistant** — auto-discovery for all entities
-- **OTA** — WiFi firmware update from Arduino IDE (hostname: `TapeDeck`)
-- **FreeRTOS** — dual-core: Core 0 = WiFi/BLE/MQTT/FFT, Core 1 = VFD/OLED/solenoids/encoder
-- **IR receiver** — NEC protocol remote control
-- **Encoder** — menu navigation with click/double-click/triple-click/long-press
-
----
-
-## Hardware
-
-| Component | Details |
-|-----------|---------|
-| MCU | ESP32-S3-DevKitC-1 |
-| VFD | Pioneer CT-737 original display (3× shift register) |
-| ADC | PCM1808 (I2S stereo, 24-bit) |
-| I/O expander | PCF8574 (I2C, 0x27) |
-| Display | 128×64 OLED (I2C) |
-| LED strip | WS2812B, 40 LEDs |
-| Transport | 4× solenoids (PLAY/STOP/REW/FWD) |
-| Encoder | Rotary encoder with push button |
-| IR | 38 kHz IR receiver |
-| Audio | Speaker 64 Ω + 100 Ω resistor (buzzer) |
+- **Керування VFD** — оригінальний дисплей Pioneer CT-737 через 3 мікросхеми зсувних регістрів (24 біти × 3)
+- **Індикатор рівня** — VU-метр в реальному часі на VFD (16 сегментів на канал, пікова затримка)
+- **OLED дисплей** — 128×64 I2C OLED з 14 стилями відображення (Sd00–Sd13)
+- **Керування транспортом** — соленоїди: PLAY / STOP / ПЕРЕМОТКА НАЗАД / ПЕРЕМОТКА ВПЕРЕД
+- **Лічильник стрічки** — імпульсний лічильник з режимами Tape Return та Remain (повтор пісні)
+- **PCF8574** — зчитування сигналів стану транспорту (PLAY/PAUSE/FWD/REC/REW) та перемикачів типу стрічки
+- **FFT аналізатор спектру** — 128 смуг через АЦП PCM1808 I2S
+- **LED стрічка WS2812B** — 40 світлодіодів з анімацією спектру
+- **WiFi + WebSocket** — веб-інтерфейс з живим VU-метром
+- **BLE GATT** — дистанційне керування через Chrome (Android) — `TapeControl_BLE.html`
+- **MQTT + Home Assistant** — авторозпізнавання всіх об'єктів
+- **OTA** — оновлення прошивки по WiFi з Arduino IDE (ім'я хоста: `TapeDeck`)
+- **FreeRTOS** — два ядра: Ядро 0 = WiFi/BLE/MQTT/FFT, Ядро 1 = VFD/OLED/соленоїди/енкодер
+- **ІЧ приймач** — дистанційне керування за протоколом NEC
+- **Енкодер** — навігація меню: клік / подвійний клік / потрійний клік / довге натискання
 
 ---
 
-## GPIO Pinout
+## Апаратне забезпечення
 
-| GPIO | Name | Function |
-|------|------|----------|
-| 1 | PIN_AUDIO_L | Analog left channel input |
-| 2 | PIN_AUDIO_R | Analog right channel input |
-| 4 | latchPins[2] | VFD Latch chip 3 |
-| 5 | latchPins[1] | VFD Latch chip 2 |
-| 6 | latchPins[0] | VFD Latch chip 1 |
-| 7 | PIN_DATA | VFD Data (shift register) |
-| 9 | OUT_STOP | Solenoid STOP |
-| 10 | OUT_PLAY | Solenoid PLAY |
-| 11 | OUT_REWIND | Solenoid REWIND |
-| 12 | OUT_FORWARD | Solenoid FORWARD |
-| 13 | ENC_CLK | Encoder CLK |
-| 14 | ENC_DT | Encoder DT |
-| 15 | PIN_CK | VFD Clock (shift register) |
-| 16 | PIN_BRIGHTNESS_PWM | VFD backlight PWM |
+| Компонент | Опис |
+|-----------|------|
+| Мікроконтролер | ESP32-S3-DevKitC-1 |
+| VFD | Оригінальний дисплей Pioneer CT-737 (3× зсувний регістр) |
+| АЦП | PCM1808 (I2S стерео, 24 біти) |
+| Розширювач I/O | PCF8574 (I2C, адреса 0x27) |
+| Дисплей | OLED 128×64 (I2C) |
+| LED стрічка | WS2812B, 40 світлодіодів |
+| Транспорт | 4× соленоїди (PLAY/STOP/REW/FWD) |
+| Енкодер | Поворотний енкодер з кнопкою |
+| ІЧ | ІЧ приймач 38 кГц |
+| Аудіо | Динамік 64 Ом + резистор 100 Ом (зумер) |
+
+---
+
+## Розпіновка GPIO
+
+| GPIO | Назва | Функція |
+|------|-------|---------|
+| 1 | PIN_AUDIO_L | Аналоговий вхід лівого каналу |
+| 2 | PIN_AUDIO_R | Аналоговий вхід правого каналу |
+| 4 | latchPins[2] | VFD Latch мікросхема 3 |
+| 5 | latchPins[1] | VFD Latch мікросхема 2 |
+| 6 | latchPins[0] | VFD Latch мікросхема 1 |
+| 7 | PIN_DATA | VFD Data (зсувний регістр) |
+| 9 | OUT_STOP | Соленоїд STOP |
+| 10 | OUT_PLAY | Соленоїд PLAY |
+| 11 | OUT_REWIND | Соленоїд REWIND |
+| 12 | OUT_FORWARD | Соленоїд FORWARD |
+| 13 | ENC_CLK | Енкодер CLK |
+| 14 | ENC_DT | Енкодер DT |
+| 15 | PIN_CK | VFD Clock (зсувний регістр) |
+| 16 | PIN_BRIGHTNESS_PWM | Підсвічування VFD (PWM) |
 | 17 | PCF_I2C_SDA | I2C SDA (OLED + PCF8574) |
 | 18 | PCF_I2C_SCL | I2C SCL (OLED + PCF8574) |
-| 0 | PIN_RESET | Encoder button (INPUT_PULLUP) |
-| 21 | PIN_IR | IR receiver |
-| 38 | G_SOURCE | Source mode output |
-| 39 | PCM1808 BCK | I2S bit clock |
-| 40 | PCM1808 LRC | I2S left/right clock |
-| 41 | PCM1808 DOUT | I2S data |
-| 42 | PCM1808 SCK | I2S master clock |
-| 45 | PIN_BUZZER | Speaker (64 Ω + 100 Ω) |
-| 46 | PIN_PULSE | Tape counter pulses |
-| 48 | LED_PIN | WS2812B LED strip |
+| 0 | PIN_RESET | Кнопка енкодера (INPUT_PULLUP) |
+| 21 | PIN_IR | ІЧ приймач |
+| 38 | G_SOURCE | Вихід режиму Source |
+| 39 | PCM1808 BCK | I2S тактовий біт |
+| 40 | PCM1808 LRC | I2S такт лівого/правого каналу |
+| 41 | PCM1808 DOUT | I2S дані |
+| 42 | PCM1808 SCK | I2S майстер-такт |
+| 45 | PIN_BUZZER | Динамік (64 Ом + 100 Ом) |
+| 46 | PIN_PULSE | Імпульси лічильника стрічки |
+| 48 | LED_PIN | LED стрічка WS2812B |
 
 ---
 
-## Arduino IDE Setup
+## Налаштування Arduino IDE
 
-> ⚠️ **CRITICAL**: Board must be configured with **PSRAM: QSPI PSRAM** enabled. Without PSRAM the firmware will crash on boot.
+> ⚠️ **ВАЖЛИВО**: Плату обов'язково налаштувати з **PSRAM: QSPI PSRAM**. Без PSRAM прошивка аварійно завершиться при запуску.
 
-**Board settings:**
-- Board: `ESP32S3 Dev Module`
-- PSRAM: `QSPI PSRAM` ← mandatory
-- Flash size: 16MB (or match your module)
-- Partition scheme: Huge APP (3MB No OTA / 1MB SPIFFS) or custom
-- Upload speed: 921600
+**Параметри плати:**
+- Плата: `ESP32S3 Dev Module`
+- PSRAM: `QSPI PSRAM` ← обов'язково
+- Розмір Flash: 16MB (або відповідно до вашого модуля)
+- Схема розділів: Huge APP (3MB No OTA / 1MB SPIFFS) або власна
+- Швидкість завантаження: 921600
 
-**OTA (WiFi upload):**  
-After first flash via USB, the board appears in Arduino IDE as a network port named **`TapeDeck`**. Select it for subsequent uploads over WiFi.
-
----
-
-## Required Libraries
-
-Install via Arduino Library Manager or ZIP:
-
-| Library | Purpose |
-|---------|---------|
-| `ESP32` core (Espressif) | Board support |
-| `WiFi` | Built-in with ESP32 core |
-| `ESPAsyncWebServer` | Async web server + WebSocket |
-| `AsyncTCP` | Required by ESPAsyncWebServer |
-| `PubSubClient` | MQTT client |
-| `ArduinoJson` | JSON for MQTT payloads |
-| `NimBLE-Arduino` | BLE GATT server |
-| `FastLED` | WS2812B LED strip |
-| `arduinoFFT` | FFT spectrum analyzer |
-| `Adafruit SSD1306` | OLED display |
-| `Adafruit GFX` | Graphics for OLED |
-| `PCF8574` | I2C I/O expander |
-| `IRremoteESP8266` | IR receiver (NEC protocol) |
-| `ArduinoOTA` | WiFi OTA updates |
+**OTA (завантаження по WiFi):**  
+Після першого прошивання через USB, плата з'являється в Arduino IDE як мережевий порт з іменем **`TapeDeck`**. Вибирайте його для подальших оновлень по WiFi.
 
 ---
 
-## Configuration
+## Необхідні бібліотеки
 
-Edit these defines at the top of `ble_wifi_control_v12_80.ino`:
+Встановити через менеджер бібліотек Arduino або ZIP:
+
+| Бібліотека | Призначення |
+|------------|------------|
+| `ESP32` core (Espressif) | Підтримка плати |
+| `WiFi` | Вбудована в ESP32 core |
+| `ESPAsyncWebServer` | Асинхронний веб-сервер + WebSocket |
+| `AsyncTCP` | Потрібна для ESPAsyncWebServer |
+| `PubSubClient` | MQTT клієнт |
+| `ArduinoJson` | JSON для MQTT повідомлень |
+| `NimBLE-Arduino` | BLE GATT сервер |
+| `FastLED` | LED стрічка WS2812B |
+| `arduinoFFT` | FFT аналізатор спектру |
+| `Adafruit SSD1306` | OLED дисплей |
+| `Adafruit GFX` | Графіка для OLED |
+| `PCF8574` | I2C розширювач I/O |
+| `IRremoteESP8266` | ІЧ приймач (протокол NEC) |
+| `ArduinoOTA` | OTA оновлення по WiFi |
+
+---
+
+## Налаштування підключення
+
+Відредагуйте ці параметри на початку файлу `ble_wifi_control_v12_80.ino`:
 
 ```cpp
-#define WIFI_SSID     "your_wifi_ssid"
-#define WIFI_PASSWORD "your_wifi_password"
-#define MQTT_SERVER   "192.168.1.x"   // Home Assistant IP
+#define WIFI_SSID     "назва_вашої_мережі"
+#define WIFI_PASSWORD "пароль_wifi"
+#define MQTT_SERVER   "192.168.1.x"   // IP адреса Home Assistant
 #define MQTT_PORT     1883
-#define MQTT_USER     "your_mqtt_user"
-#define MQTT_PASSWORD "your_mqtt_password"
+#define MQTT_USER     "користувач_mqtt"
+#define MQTT_PASSWORD "пароль_mqtt"
 ```
 
 ---
 
-## Home Assistant Integration
+## Інтеграція з Home Assistant
 
-### MQTT Auto-Discovery
+### Авторозпізнавання MQTT
 
-The firmware publishes HA auto-discovery messages on boot. All entities appear automatically under device **"Tape Deck"**.
+Прошивка публікує повідомлення авторозпізнавання HA при запуску. Всі об'єкти з'являються автоматично під пристроєм **"Tape Deck"**.
 
-**Transport buttons** (entity IDs):
+**Кнопки транспорту** (ідентифікатори об'єктів):
 - `button.tape_deck_tape_play`
 - `button.tape_deck_tape_stop`
 - `button.tape_deck_tape_rew`
 - `button.tape_deck_tape_fwd`
 
-**Sensors:** tape counter, VU level L/R, transport state, tape type, OLED style, brightness, BLE status, etc.
+**Сенсори:** лічильник стрічки, рівень VU L/R, стан транспорту, тип стрічки, стиль OLED, яскравість, статус BLE тощо.
 
-### Custom Lovelace Card
+### Картка Lovelace
 
-1. Copy `akai-tape-card.js` to `/config/www/` on your HA instance
-2. In HA → Settings → Dashboards → Resources, add:
+1. Скопіюйте `akai-tape-card.js` до `/config/www/` на вашому сервері HA
+2. В HA → Налаштування → Панелі керування → Ресурси додайте:
    ```
    /local/akai-tape-card.js
    ```
-   Type: JavaScript module
-3. Add card in your dashboard:
+   Тип: JavaScript модуль
+3. Додайте картку на панель:
    ```yaml
    type: custom:akai-tape-card
    ```
-4. Hard refresh the browser / clear cache in HA mobile app
+4. Зробіть жорстке оновлення браузера / очистіть кеш у мобільному додатку HA
 
-The card shows animated VFD-style display with transport controls and real-time status indicators.
-
----
-
-## BLE Remote Control
-
-Open `TapeControl_BLE.html` in **Chrome on Android** (Chrome desktop doesn't support Web Bluetooth).
-
-Controls available: PLAY, STOP, REW, FWD, volume, brightness, OLED style selection.
+Картка відображає анімований дисплей у стилі VFD з кнопками транспорту та індикаторами стану в реальному часі.
 
 ---
 
-## VFD Details
+## BLE дистанційне керування
 
-Three shift-register chips, 24 bits each (72 bits total):
+Відкрийте `TapeControl_BLE.html` у **Chrome на Android** (Chrome на ПК не підтримує Web Bluetooth).
 
-- **Chip 1** — 4× 7-segment digits (tape counter) + level scale indicators
-- **Chip 2** — transport indicators (PLAY/PAUSE/FWD/REW), tape type (Metal/CrO2/Norm), Dolby B/C/NR, Filter, right channel VU
-- **Chip 3** — left channel VU (16 segments), REC/Mute/Tape/Source indicators
+Доступні функції: PLAY, STOP, REW, FWD, гучність, яскравість, вибір стилю OLED.
 
 ---
 
-## Project Structure
+## Опис VFD
+
+Три мікросхеми зсувних регістрів, по 24 біти кожна (72 біти всього):
+
+- **Мікросхема 1** — 4× семисегментні цифри (лічильник стрічки) + індикатори шкали рівня
+- **Мікросхема 2** — індикатори транспорту (PLAY/PAUSE/FWD/REW), тип стрічки (Metal/CrO2/Norm), Dolby B/C/NR, Filter, VU правого каналу
+- **Мікросхема 3** — VU лівого каналу (16 сегментів), індикатори REC/Mute/Tape/Source
+
+---
+
+## Структура проекту
 
 ```
 pioneer-ct737-esp32/
-├── ble_wifi_control_v12_80.ino   # Main firmware (ESP32-S3, Arduino IDE)
-├── akai-tape-card.js             # Home Assistant custom Lovelace card
-├── TapeControl_BLE.html          # BLE remote control (Chrome Android)
+├── ble_wifi_control_v12_80.ino   # Основна прошивка (ESP32-S3, Arduino IDE)
+├── akai-tape-card.js             # Картка Lovelace для Home Assistant
+├── TapeControl_BLE.html          # BLE дистанційне керування (Chrome Android)
 └── README.md
 ```
 
 ---
 
-## License
+## Ліцензія
 
-MIT License — free to use, modify, and distribute.
+Ліцензія MIT — вільне використання, модифікація та розповсюдження.
 
 ---
 
-## Author
+## Автор
 
-Developed for Pioneer CT-737 restoration project.  
-ESP32-S3 controller replacing original transport logic with WiFi/BLE/MQTT control.
+Розроблено для проекту відновлення Pioneer CT-737.  
+Контролер ESP32-S3 замінює оригінальну логіку транспорту з керуванням через WiFi/BLE/MQTT.
