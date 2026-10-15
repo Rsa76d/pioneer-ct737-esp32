@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tape Control</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+  :root {
+    --bg:#0a0e14;--panel:#111820;--border:#1e3a4a;
+    --accent:#00d4ff;--accent2:#ff6b00;
+    --green:#00ff88;--red:#ff2244;--text:#c8e0e8;--dim:#3a5060;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .container{width:100%;max-width:400px;position:relative;z-index:1}
+  header{text-align:center;margin-bottom:14px;padding:16px;border:1px solid var(--border);background:var(--panel);position:relative;overflow:hidden}
+  header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+  .title{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;letter-spacing:4px;color:var(--accent);text-shadow:0 0 20px rgba(0,212,255,0.5)}
+  .subtitle{font-size:9px;letter-spacing:3px;color:var(--dim);margin-top:4px}
+  .status-bar{display:flex;align-items:center;padding:10px 14px;background:var(--panel);border:1px solid var(--border);margin-bottom:12px;gap:10px}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:all 0.3s}
+  .status-dot.connected{background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+  @keyframes recblink{0%,100%{opacity:1}50%{opacity:0.15}}
+  .status-text{font-size:10px;letter-spacing:2px;color:var(--dim);flex:1}
+  .status-text.connected{color:var(--green)}
+  .btn-connect{padding:7px 14px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:2px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;transition:all 0.2s;flex-shrink:0}
+  .btn-connect:active{background:var(--accent);color:var(--bg)}
+  .btn-connect.disconnect{border-color:var(--red);color:var(--red)}
+  .btn-connect.disconnect:active{background:var(--red);color:#fff}
+  .section{margin-bottom:12px;border:1px solid var(--border);background:var(--panel);overflow:hidden}
+  .section-label{padding:7px 14px;font-size:9px;letter-spacing:3px;color:var(--dim);border-bottom:1px solid var(--border);background:rgba(0,212,255,0.03)}
+  .section-content{padding:12px}
+  .indicators{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
+  .indicators2{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .ind{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;border:1px solid var(--border);transition:all 0.2s}
+  #i-rew{background:rgba(21,101,192,0.15);border-color:rgba(21,101,192,0.3)}
+  #i-stp{background:rgba(80,80,80,0.2);border-color:rgba(120,120,120,0.3)}
+  #i-ply{background:rgba(46,125,50,0.15);border-color:rgba(76,175,80,0.3)}
+  #i-fwd{background:rgba(106,27,154,0.15);border-color:rgba(142,36,170,0.3)}
+  #i-rec{background:rgba(198,40,40,0.15);border-color:rgba(229,57,53,0.3)}
+  #i-dlb{background:rgba(230,81,0,0.12);border-color:rgba(255,107,0,0.25)}
+  #i-mpx{background:rgba(230,81,0,0.12);border-color:rgba(255,107,0,0.25)}
+  #i-hx{background:rgba(230,81,0,0.12);border-color:rgba(255,107,0,0.25)}
+  .ind-dot{width:10px;height:10px;border-radius:50%;background:var(--dim);transition:all 0.2s}
+  .ind-icon{width:20px;height:20px;fill:var(--dim);transition:fill 0.2s}
+  .ind-label{font-size:8px;letter-spacing:1px;color:var(--dim);transition:color 0.2s}
+  .ind.on-rew .ind-dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .ind.on-rew .ind-icon{fill:var(--accent);filter:drop-shadow(0 0 4px var(--accent))}
+  .ind.on-rew .ind-label{color:var(--accent)}
+  .ind.on-stp .ind-dot{background:var(--text);box-shadow:0 0 8px rgba(200,224,232,0.5)}
+  .ind.on-stp .ind-icon{fill:var(--text);filter:drop-shadow(0 0 3px rgba(200,224,232,0.5))}
+  .ind.on-stp .ind-label{color:var(--text)}
+  .ind.on-ply .ind-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+  .ind.on-ply .ind-icon{fill:var(--green);filter:drop-shadow(0 0 4px var(--green))}
+  .ind.on-ply .ind-label{color:var(--green)}
+  .ind.on-fwd .ind-dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .ind.on-fwd .ind-icon{fill:var(--accent);filter:drop-shadow(0 0 4px var(--accent))}
+  .ind.on-fwd .ind-label{color:var(--accent)}
+  .ind.on-rec .ind-dot{background:var(--red);box-shadow:0 0 8px var(--red);animation:recblink 0.6s infinite}
+  .ind.on-rec .ind-icon{fill:var(--red);filter:drop-shadow(0 0 4px var(--red));animation:recblink 0.6s infinite}
+  .ind.on-rec .ind-label{color:var(--red)}
+  .ind.on-dlb .ind-dot{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .ind.on-dlb .ind-label{color:var(--accent2)}
+  .ind.on-mpx .ind-dot{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .ind.on-mpx .ind-label{color:var(--accent2)}
+  .ind.on-hx .ind-dot{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .ind.on-hx .ind-label{color:var(--accent2)}
+  .transport{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .btn{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid var(--border);background:rgba(0,0,0,0.3);cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;user-select:none}
+  .btn::before{content:'';position:absolute;inset:0;background:var(--accent);opacity:0;transition:opacity 0.15s}
+  .btn:active::before{opacity:0.15}
+  .btn svg{width:22px;height:22px;fill:var(--accent);position:relative;z-index:1;filter:drop-shadow(0 0 4px rgba(0,212,255,0.4))}
+  .btn .label{font-size:7px;letter-spacing:1px;color:var(--dim);position:relative;z-index:1;font-family:'Share Tech Mono',monospace}
+  .btn.play{background:#2e7d32;border-color:#4caf50}
+  .btn.play svg{fill:#fff;filter:none}
+  .btn.play .label{color:rgba(255,255,255,0.7)}
+  .btn.stop{background:#c62828;border-color:#e53935}
+  .btn.stop svg{fill:#fff;filter:none}
+  .btn.stop .label{color:rgba(255,255,255,0.7)}
+  .btn.rew{background:#1565c0;border-color:#1976d2}
+  .btn.rew svg{fill:#fff;filter:none}
+  .btn.rew .label{color:rgba(255,255,255,0.7)}
+  .btn.fwd{background:#6a1b9a;border-color:#8e24aa}
+  .btn.fwd svg{fill:#fff;filter:none}
+  .btn.fwd .label{color:rgba(255,255,255,0.7)}
+  .btn.rec svg{fill:var(--red);filter:drop-shadow(0 0 4px rgba(255,34,68,0.4))}
+  .btn.rec{border-color:rgba(255,34,68,0.2)}
+  .btn:active{transform:scale(0.95);border-color:var(--accent)}
+  .btn.play:active{border-color:var(--green)}
+  .btn.rec:active{border-color:var(--red)}
+  .modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .btn-mode{padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--dim);cursor:pointer;transition:all 0.2s;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;user-select:none}
+  .btn-mode .icon{font-size:16px}
+  .btn-mode:active{transform:scale(0.97)}
+  .btn-mode.active{border-color:var(--accent2);color:var(--accent2);background:rgba(255,107,0,0.08)}
+  .log{height:65px;overflow-y:auto;font-size:10px;line-height:1.6;color:var(--dim)}
+  .log-entry{display:flex;gap:8px}
+  .log-entry .time{color:var(--accent);opacity:0.5;flex-shrink:0}
+  .log-entry .msg{color:var(--text)}
+  .log-entry.ok .msg{color:var(--green)}
+  .log-entry.err .msg{color:var(--red)}
+  .no-ble{text-align:center;padding:14px;color:var(--red);font-size:11px;border:1px solid var(--red);margin-bottom:12px;display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="title">TAPE CONTROL</div>
+    <div class="subtitle">BLUETOOTH LE REMOTE</div>
+  </header>
+  <div class="no-ble" id="noBle">Web Bluetooth не підтримується. Використовуй Chrome на Android.</div>
+  <div class="status-bar">
+    <div class="status-dot" id="sDot"></div>
+    <div class="status-text" id="sTxt">НЕ ПІДКЛЮЧЕНО</div>
+    <button class="btn-connect" id="sBtn" onclick="toggleConnect()">CONNECT</button>
+  </div>
+  <div class="section">
+    <div class="section-label">СТАН ПРИСТРОЮ</div>
+    <div class="section-content">
+      <div class="indicators">
+        <div class="ind" id="i-rew">
+          <svg viewBox="0 0 24 24" class="ind-icon"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+          <div class="ind-label">REW</div>
+        </div>
+        <div class="ind" id="i-stp">
+          <svg viewBox="0 0 24 24" class="ind-icon"><rect x="4" y="4" width="16" height="16"/></svg>
+          <div class="ind-label">STOP</div>
+        </div>
+        <div class="ind" id="i-ply">
+          <svg viewBox="0 0 24 24" class="ind-icon"><path d="M8 5v14l11-7z"/></svg>
+          <div class="ind-label">PLAY</div>
+        </div>
+        <div class="ind" id="i-fwd">
+          <svg viewBox="0 0 24 24" class="ind-icon"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+          <div class="ind-label">FWD</div>
+        </div>
+      </div>
+      <div class="indicators2">
+        <div class="ind" id="i-rec">
+          <svg viewBox="0 0 24 24" class="ind-icon"><circle cx="12" cy="12" r="8"/></svg>
+          <div class="ind-label">REC</div>
+        </div>
+        <div class="ind" id="i-dlb"><div class="ind-dot"></div><div class="ind-label">DOLBY</div></div>
+        <div class="ind" id="i-mpx"><div class="ind-dot"></div><div class="ind-label">MPX</div></div>
+        <div class="ind" id="i-hx"><div class="ind-dot"></div><div class="ind-label">HX PRO</div></div>
+      </div>
+      <div style="margin-top:8px;display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:10px;letter-spacing:2px;color:#3a5060">
+        Активність IR<span id="ir-dot" style="width:10px;height:10px;border-radius:50%;background:#1a2a3a;display:inline-block;margin-left:4px;transition:background 0.15s"></span>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">ТРАНСПОРТ</div>
+    <div class="section-content">
+      <div class="transport">
+        <button class="btn rew" onclick="send('rew')"><svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg><span class="label">REW</span></button>
+        <button class="btn stop" onclick="send('stop')"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg><span class="label">STOP</span></button>
+        <button class="btn play" onclick="send('play')"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span class="label">PLAY</span></button>
+        <button class="btn fwd" onclick="send('fwd')"><svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg><span class="label">FWD</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">РЕЖИМИ</div>
+    <div class="section-content">
+      <div class="modes">
+        <button class="btn-mode" id="bDolby" onclick="send('dolby')"><span class="icon">🎵</span><span>DOLBY</span></button>
+        <button class="btn-mode" id="bMpx"   onclick="send('mpx')"><span class="icon">📻</span><span>MPX</span></button>
+        <button class="btn-mode" id="bHx"    onclick="send('hx')"><span class="icon">⚡</span><span>HX PRO</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">ЛОГ</div>
+    <div class="section-content"><div class="log" id="log"></div></div>
+  </div>
+</div>
+<script>
+const SVC='12345678-1234-1234-1234-123456789abc';
+const CMD='12345678-1234-1234-1234-123456789abd';
+const STS='12345678-1234-1234-1234-123456789abe';
+let device=null,cmdChar=null,stsChar=null,connected=false;
+
+if(!navigator.bluetooth) document.getElementById('noBle').style.display='block';
+
+async function toggleConnect(){ if(connected) disconnect(); else await connect(); }
+
+async function connect(){
+  try{
+    log('Пошук...','');
+    device=await navigator.bluetooth.requestDevice({filters:[{name:'TapeControl'}],optionalServices:[SVC]});
+    device.addEventListener('gattserverdisconnected',onDisc);
+    log('Підключення...','');
+    const srv=await device.gatt.connect();
+    const svc=await srv.getPrimaryService(SVC);
+    cmdChar=await svc.getCharacteristic(CMD);
+    stsChar=await svc.getCharacteristic(STS);
+    await stsChar.startNotifications();
+    stsChar.addEventListener('characteristicvaluechanged',onStatus);
+    connected=true; updateUI(true); log('Підключено!','ok');
+  }catch(e){ log('Помилка: '+e.message,'err'); }
+}
+
+function disconnect(){ if(device&&device.gatt.connected) device.gatt.disconnect(); onDisc(); }
+
+function onDisc(){
+  connected=false; cmdChar=null; stsChar=null;
+  updateUI(false); resetInd(); log('Відключено','err');
+}
+
+function updateUI(on){
+  const dot=document.getElementById('sDot');
+  const txt=document.getElementById('sTxt');
+  const btn=document.getElementById('sBtn');
+  if(on){
+    dot.classList.add('connected');
+    txt.textContent=device.name||'ПІДКЛЮЧЕНО';
+    txt.classList.add('connected');
+    btn.textContent='DISCONNECT';
+    btn.classList.add('disconnect');
+  } else {
+    dot.classList.remove('connected');
+    txt.textContent='НЕ ПІДКЛЮЧЕНО';
+    txt.classList.remove('connected');
+    btn.textContent='CONNECT';
+    btn.classList.remove('disconnect');
+  }
+}
+
+function onStatus(e){
+  try{
+    const d=JSON.parse(new TextDecoder().decode(e.target.value));
+    setInd('rew',d.rew); setInd('stp',d.stp); setInd('ply',d.ply); setInd('fwd',d.fwd);
+    setInd('rec',d.rec); setInd('dlb',d.dlb); setInd('mpx',d.mpx); setInd('hx',d.hx);
+    document.getElementById('bDolby').classList.toggle('active',d.dlb>0);
+    document.getElementById('bMpx').classList.toggle('active',d.mpx>0);
+    document.getElementById('bHx').classList.toggle('active',d.hx>0);
+    var irDot=document.getElementById('ir-dot');
+    if(irDot) irDot.style.background=d.ir?'#2980b9':'#1a2a3a';
+  }catch(e){}
+}
+
+function setInd(n,v){
+  const el=document.getElementById('i-'+n);
+  if(!el) return;
+  el.className='ind'+(v?' on-'+n:'');
+}
+
+function resetInd(){
+  ['rew','stp','ply','fwd','rec','dlb','mpx','hx'].forEach(n=>setInd(n,0));
+  ['bDolby','bMpx','bHx'].forEach(id=>document.getElementById(id).classList.remove('active'));
+}
+
+async function send(cmd){
+  if(!connected||!cmdChar){log('Не підключено!','err');return;}
+  try{
+    await cmdChar.writeValue(new TextEncoder().encode(cmd));
+    log(cmd.toUpperCase(),'ok');
+  }catch(e){log('Помилка: '+e.message,'err');}
+}
+
+function log(msg,type){
+  const el=document.getElementById('log');
+  const t=new Date();
+  const ts=[t.getHours(),t.getMinutes(),t.getSeconds()].map(x=>x.toString().padStart(2,'0')).join(':');
+  const div=document.createElement('div');
+  div.className='log-entry'+(type?' '+type:'');
+  div.innerHTML='<span class="time">'+ts+'</span><span class="msg">'+msg+'</span>';
+  el.appendChild(div);
+  el.scrollTop=el.scrollHeight;
+}
+</script>
+</body>
+</html>
