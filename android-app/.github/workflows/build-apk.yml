@@ -1,0 +1,70 @@
+name: Збірка APK
+
+# Запуск тільки вручну: вкладка Actions → "Збірка APK" → Run workflow
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: "Створити GitHub Release з APK (зручно завантажити на телефон)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Завантажити код
+        uses: actions/checkout@v4
+
+      - name: Встановити JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Шрифти Orbitron та Share Tech Mono (як у веб-версії).
+      # Якщо завантаження не вдалося — додаток просто використає системні шрифти.
+      - name: Завантажити шрифти
+        run: |
+          mkdir -p app/src/main/res/font
+          curl -fsSL -o app/src/main/res/font/share_tech_mono.ttf \
+            "https://raw.githubusercontent.com/google/fonts/main/ofl/sharetechmono/ShareTechMono-Regular.ttf" || true
+          curl -fsSL -o app/src/main/res/font/orbitron.ttf \
+            "https://raw.githubusercontent.com/google/fonts/main/ofl/orbitron/Orbitron%5Bwght%5D.ttf" || true
+          for f in app/src/main/res/font/*.ttf; do
+            if [ ! -s "$f" ] || [ "$(stat -c%s "$f")" -lt 10000 ]; then rm -f "$f"; fi
+          done
+          ls -la app/src/main/res/font || true
+
+      - name: Налаштувати Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Зібрати release APK
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Підготувати файл
+        id: meta
+        run: |
+          VERSION="1.0.${{ github.run_number }}"
+          cp app/build/outputs/apk/release/app-release.apk "TapeControl-${VERSION}.apk"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Зберегти APK як артефакт
+        uses: actions/upload-artifact@v4
+        with:
+          name: TapeControl-${{ steps.meta.outputs.version }}
+          path: TapeControl-*.apk
+          retention-days: 30
+
+      - name: Створити Release
+        if: ${{ inputs.create_release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.meta.outputs.version }}
+          name: Tape Control ${{ steps.meta.outputs.version }}
+          files: TapeControl-*.apk

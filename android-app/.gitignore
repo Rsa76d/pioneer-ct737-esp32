@@ -1,0 +1,8 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+# Шрифти завантажуються під час збірки в Actions
+app/src/main/res/font/*.ttf

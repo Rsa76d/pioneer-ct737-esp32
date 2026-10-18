@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Іконка-касета в кольорах застосунку -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M30,38h48a4,4 0 0 1 4,4v24a4,4 0 0 1 -4,4h-48a4,4 0 0 1 -4,-4v-24a4,4 0 0 1 4,-4z"
+        android:strokeWidth="3"
+        android:strokeColor="#00D4FF" />
+    <path
+        android:pathData="M36,54a6,6 0 1,0 12,0a6,6 0 1,0 -12,0"
+        android:strokeWidth="3"
+        android:strokeColor="#00D4FF" />
+    <path
+        android:pathData="M60,54a6,6 0 1,0 12,0a6,6 0 1,0 -12,0"
+        android:strokeWidth="3"
+        android:strokeColor="#00D4FF" />
+    <path
+        android:pathData="M44,66h20"
+        android:strokeWidth="3"
+        android:strokeColor="#FF6B00" />
+</vector>
