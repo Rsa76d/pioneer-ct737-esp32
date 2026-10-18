@@ -320,12 +320,14 @@ WiFi (SSID, пароль, статична IP), MQTT налаштування, O
 ## BLE дистанційне керування
 
 ### Android додаток (рекомендовано)
-Завантажте `TapeControl-release.apk`:
+Завантажте `TapeControl-release.apk` (Flutter-додаток):
 1. Дозволити встановлення з невідомих джерел
 2. Встановити APK
 3. Відкрити і натиснути **CONNECT**
 
 **Можливості:** REW/STOP/PLAY/FWD, стан (REC/DOLBY/MPX/HX PRO), IR активність, лог.
+
+> Додаток розроблено на [Flutter](https://flutter.dev/) — крос-платформений фреймворк від Google.
 
 ### Веб-інтерфейс BLE
 Відкрити `TapeControl_BLE.html` у **Chrome на Android** (Chrome на ПК не підтримує Web Bluetooth).
